@@ -131,6 +131,7 @@
         var d = e.dog ? dogById(e.dog) : null;
         var desc = e.type === "in" ? (e.who ? esc(e.who) : '<span class="muted">' + T.anon + "</span>") : esc(e.what || T.bought);
         if (e.note) desc += '<br><span class="muted" style="font-size:12px">' + esc(e.note) + "</span>";
+        if (e.g) desc += '<br><span class="muted" style="font-size:11px">' + esc(e.g) + "</span>";
         var amt = e.noAmount ? '<span class="mw">' + T.noSum + "</span>" : (e.type === "in" ? "+" : "−") + money(+e.amount || 0);
         var pic = e.receipt ? '<a href="' + esc(A.photoURL(e.receipt)) + '" target="_blank" rel="noopener"><img src="' + esc(A.photoURL(e.receipt, true)) + '" alt="' + T.photo + '"></a>' : "";
         return '<div class="mr" role="row" data-lid="' + esc(e.id) + '"><span class="mono">' + esc(e.date || "") + "</span><span>" + (e.type === "in" ? T.inW : T.outW) + '</span><span class="mono ma ' + (e.type === "in" ? "mi" : "mo") + '">' + amt + "</span><span>" + (e.dog ? esc(d ? dogLabel(d) : e.dog) : T.fund) + "</span><span>" + (e.stage ? T.st[e.stage] || "" : "") + "</span><span>" + desc + "</span><span>" + pic + '</span><span class="acts"><button class="btn ghost sm" data-ledit>' + T.edit + '</button><button class="btn ghost sm" data-ldel>' + T.del + "</button></span></div>";
@@ -212,6 +213,7 @@
     if (!(amt > 0) && !(isOut && raw === "")) return A.toast(T.badAmount);
     var old = form.editId ? ledger().filter(function (x) { return x.id === form.editId; })[0] : null;
     var e = old || { id: newId() };
+    if (!old && window.__GH) e.g = window.__GH.group();
     if (old) bump(old, -1);
     e.type = form.type; e.date = f.elements.date.value || today(); e.amount = amt; e.dog = f.elements.dog.value; e.stage = f.elements.stage.value; e.note = f.elements.note.value.trim();
     if (amt > 0) delete e.noAmount; else e.noAmount = true;
@@ -244,7 +246,7 @@
       try { fh = await fileHash(files[i]); } catch (x) {}
       if (fh && seen[fh]) { dup++; continue; }
       try { r = await readReceipt(files[i]); } catch (x) { continue; }
-      var e = { id: newId(), type: "out", date: r.date || today(), amount: r.ok ? r.amount : 0, dog: dog, stage: stage, note: "", what: r.ok && r.seller ? r.seller : T.bought, auto: true };
+      var e = { id: newId(), type: "out", date: r.date || today(), amount: r.ok ? r.amount : 0, dog: dog, stage: stage, note: "", what: r.ok && r.seller ? r.seller : T.bought, auto: true, g: window.__GH ? window.__GH.group() : "" };
       if (fh) { e.fh = fh; seen[fh] = 1; }
       if (!r.ok) e.noAmount = true;
       attachPic(e, r);
