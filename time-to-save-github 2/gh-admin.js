@@ -219,6 +219,7 @@
     var gs = document.createElement("script"); gs.src = "groups.js"; document.body.appendChild(gs);
     var cs = document.createElement("script"); cs.src = "cards.js"; document.body.appendChild(cs);
     var cu = document.createElement("script"); cu.src = "curators.js"; document.body.appendChild(cu);
+    var vi = document.createElement("script"); vi.src = "video.js"; document.body.appendChild(vi);
   }
   function dirty() { return window.__TTS && snap(window.__TTS.state) !== baseline; }
   function footer() {
