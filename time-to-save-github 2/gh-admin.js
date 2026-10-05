@@ -47,7 +47,7 @@
   function blobB64(b) { return new Promise(function (res, rej) { var r = new FileReader(); r.onload = function () { res(String(r.result).split(",")[1]); }; r.onerror = rej; r.readAsDataURL(b); }); }
 
   var sha = null, baseline = "", busy = false, sent = {};
-  function snap(s) { return JSON.stringify({ dogs: s.dogs, settings: s.settings }); }
+  function snap(s) { return JSON.stringify({ dogs: s.dogs, settings: s.settings, ledger: s.ledger || [] }); }
 
   var MODE = "tts.mode";
   function b64(u8) { var o = ""; for (var i = 0; i < u8.length; i++) o += String.fromCharCode(u8[i]); return btoa(o); }
@@ -178,6 +178,7 @@
     st.dogs = j.dogs || [];
     if (j.settings) st.settings = Object.assign({}, st.settings, j.settings);
     if (j.updated) st.updated = j.updated;
+    st.ledger = j.ledger || [];
     st.examples = false;
     A.ui.demo = false;
     baseline = snap(st);
@@ -187,6 +188,7 @@
     window.addEventListener("beforeunload", function (e) { if (!busy && dirty()) { e.preventDefault(); e.returnValue = ""; } });
     footer();
     volunteerPanel();
+    var ms = document.createElement("script"); ms.src = "money.js"; document.body.appendChild(ms);
   }
   function dirty() { return window.__TTS && snap(window.__TTS.state) !== baseline; }
   function footer() {
@@ -209,7 +211,7 @@
     document.getElementById("ghp").onclick = publish;
     document.getElementById("ghd").onclick = function () {
       var A = window.__TTS, o = JSON.parse(baseline);
-      A.state.dogs = o.dogs; A.state.settings = o.settings; A.resetCards(); A.render();
+      A.state.dogs = o.dogs; A.state.settings = o.settings; A.state.ledger = o.ledger || []; A.resetCards(); A.render();
     };
   }
   async function pool(items, n, fn) {
@@ -227,6 +229,7 @@
       if (cur.sha !== sha) { A.toast(T.conflict); return; }
       var ids = [];
       st.dogs.forEach(function (d) { (d.photos || []).forEach(function (p) { if (A.LOCAL.has(p + "|f") && !sent[p] && ids.indexOf(p) < 0) ids.push(p); }); });
+      (st.ledger || []).forEach(function (e) { var p = e.receipt; if (p && A.LOCAL.has(p + "|f") && !sent[p] && ids.indexOf(p) < 0) ids.push(p); });
       var jobs = [];
       ids.forEach(function (id) { ["f", "t"].forEach(function (k) { jobs.push([id, k]); }); });
       var tree = [], done = 0;
@@ -238,7 +241,7 @@
         var b = document.getElementById("ghp"); if (b) b.textContent = T.pubbing + " " + Math.ceil(done / 2) + "/" + ids.length;
       });
       st.updated = new Date().toISOString();
-      var json = JSON.stringify({ v: 3, updated: st.updated, settings: st.settings, dogs: st.dogs });
+      var json = JSON.stringify({ v: 3, updated: st.updated, settings: st.settings, dogs: st.dogs, ledger: st.ledger || [] });
       var db = await gh("/git/blobs", { method: "POST", body: JSON.stringify({ content: b64text(json), encoding: "base64" }) });
       tree.push({ path: path("data.json"), mode: "100644", type: "blob", sha: db.sha });
       var ref = await gh("/git/ref/heads/" + encodeURIComponent(BR));
