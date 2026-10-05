@@ -217,6 +217,7 @@
     volunteerPanel();
     var ms = document.createElement("script"); ms.src = "money.js"; document.body.appendChild(ms);
     var gs = document.createElement("script"); gs.src = "groups.js"; document.body.appendChild(gs);
+    var cs = document.createElement("script"); cs.src = "cards.js"; document.body.appendChild(cs);
   }
   function dirty() { return window.__TTS && snap(window.__TTS.state) !== baseline; }
   function footer() {
