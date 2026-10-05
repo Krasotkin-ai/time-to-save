@@ -18,9 +18,33 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - id: model
+        uses: actions/cache@v4
+        with:
+          path: _model
+          key: tinyclip40-${{ hashFiles('tools/build_model.py') }}
+      - name: Build photo model
+        if: steps.model.outputs.cache-hit != 'true'
+        run: |
+          pip install numpy scipy ftfy regex
+          pip install --no-deps open_clip_torch==3.3.0
+          curl -sSL -o ck.pt https://github.com/wkcn/TinyCLIP-model-zoo/releases/download/checkpoints/TinyCLIP-ViT-40M-32-Text-19M-LAION400M.pt
+          python tools/build_model.py ck.pt _model
+      - name: Assemble site
+        run: |
+          mkdir -p _site
+          cp -r "time-to-save-github 2"/. _site/
+          mkdir -p _site/models _site/lib
+          cp _model/* _site/models/
+          npm pack @tensorflow/tfjs@4.22.0 --silent
+          tar xzf tensorflow-tfjs-4.22.0.tgz package/dist/tf.min.js
+          cp package/dist/tf.min.js _site/lib/
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: "time-to-save-github 2"
+          path: _site
       - id: deployment
         uses: actions/deploy-pages@v4
