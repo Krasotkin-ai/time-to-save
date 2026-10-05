@@ -14,7 +14,10 @@
     bad: "Ключ не подошёл или у него нет права записи.", unsaved: "Неопубликованные изменения", unsavedNote: "Посетители увидят их после публикации.",
     pub: "Опубликовать на сайте", pubbing: "Публикую…", discard: "Отменить", done: "Опубликовано. Сайт обновится примерно через минуту.",
     conflict: "Сайт изменили после того, как вы открыли эту страницу. Обновите страницу и повторите изменения.", err: "Не удалось опубликовать. Проверьте интернет и попробуйте ещё раз.",
-    signout: "Выйти", toSite: "На сайт", loading: "Загружаю…"
+    signout: "Выйти", toSite: "На сайт", loading: "Загружаю…",
+    pwTitle: "Вход для волонтёров", pwNote: "Введите пароль, который вам дали координаторы.", pw: "Пароль", pwBad: "Неверный пароль.", useKey: "Вход по ключу GitHub",
+    vTitle: "Пароль для волонтёров", vNote: "Волонтёры входят по этому паролю без ключей GitHub. Не короче 10 символов; передавайте его только своим волонтёрам.", vSet: "Сохранить пароль", vReset: "Отключить все пароли",
+    vShort: "Пароль должен быть не короче 10 символов.", vDone: "Пароль сохранён. Работает примерно через минуту.", vOff: "Все пароли отключены.", vCount: "Активных паролей"
   } : {
     title: "Volunteer sign-in", note: "You need a GitHub access token with write access to the site repository. It stays only in this browser.",
     token: "Access token (github_pat_…)", enter: "Sign in", how: "How to get a token",
@@ -22,7 +25,10 @@
     bad: "The token was rejected or cannot write to the repository.", unsaved: "Unpublished changes", unsavedNote: "Visitors see them after you publish.",
     pub: "Publish to the site", pubbing: "Publishing…", discard: "Discard", done: "Published. The site updates in about a minute.",
     conflict: "The site changed after you opened this page. Reload and redo your changes.", err: "Publishing failed. Check your connection and try again.",
-    signout: "Sign out", toSite: "To the site", loading: "Loading…"
+    signout: "Sign out", toSite: "To the site", loading: "Loading…",
+    pwTitle: "Volunteer sign-in", pwNote: "Enter the password the coordinators gave you.", pw: "Password", pwBad: "Wrong password.", useKey: "Sign in with a GitHub token",
+    vTitle: "Volunteer password", vNote: "Volunteers sign in with this password, no GitHub token needed. At least 10 characters; share it only with your volunteers.", vSet: "Save password", vReset: "Turn off all passwords",
+    vShort: "The password must be at least 10 characters.", vDone: "Password saved. It works in about a minute.", vOff: "All passwords turned off.", vCount: "Active passwords"
   };
   function token() { try { return localStorage.getItem(KEY) || ""; } catch (e) { return ""; } }
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
@@ -43,6 +49,89 @@
   var sha = null, baseline = "", busy = false, sent = {};
   function snap(s) { return JSON.stringify({ dogs: s.dogs, settings: s.settings }); }
 
+  var MODE = "tts.mode";
+  function b64(u8) { var o = ""; for (var i = 0; i < u8.length; i++) o += String.fromCharCode(u8[i]); return btoa(o); }
+  function unb64u8(s) { return Uint8Array.from(atob(s), function (c) { return c.charCodeAt(0); }); }
+  async function keyFrom(pw, salt) {
+    var base = await crypto.subtle.importKey("raw", new TextEncoder().encode(pw), "PBKDF2", false, ["deriveKey"]);
+    return crypto.subtle.deriveKey({ name: "PBKDF2", salt: salt, iterations: 310000, hash: "SHA-256" }, base, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]);
+  }
+  async function seal(pw, secret) {
+    var salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12));
+    var ct = await crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, await keyFrom(pw, salt), new TextEncoder().encode(secret));
+    return { salt: b64(salt), iv: b64(iv), ct: b64(new Uint8Array(ct)), created: new Date().toISOString() };
+  }
+  async function unseal(pw, e) {
+    var pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv: unb64u8(e.iv) }, await keyFrom(pw, unb64u8(e.salt)), unb64u8(e.ct));
+    return new TextDecoder().decode(pt);
+  }
+  async function volunteers() {
+    try { var r = await fetch("volunteers.json", { cache: "no-store" }); if (!r.ok) return []; var j = await r.json(); return j.entries || []; } catch (e) { return []; }
+  }
+  async function passForm(msg) {
+    var list = await volunteers();
+    if (!list.length) return loginForm(msg);
+    document.getElementById("app").innerHTML =
+      '<section style="max-width:420px;margin:48px auto;padding:0 16px"><form class="panel" id="ghpf"><h2>' + T.pwTitle + '</h2>' +
+      '<p class="muted" style="font-size:14px">' + T.pwNote + '</p>' +
+      '<label class="field"><span>' + T.pw + '</span><input id="ghpw" type="password" autocomplete="current-password" required></label>' +
+      '<p class="report" id="ghe"' + (msg ? "" : " hidden") + '><span class="w">' + esc(msg || "") + '</span></p>' +
+      '<button class="btn" type="submit" id="ghpb">' + T.enter + '</button>' +
+      '<p style="font-size:13px;display:flex;gap:16px;flex-wrap:wrap"><a href="./">' + T.toSite + '</a><a href="#" id="ghkey">' + T.useKey + '</a></p></form></section>';
+    document.getElementById("ghkey").onclick = function (e) { e.preventDefault(); loginForm(); };
+    document.getElementById("ghpf").onsubmit = async function (e) {
+      e.preventDefault();
+      var b = document.getElementById("ghpb"); b.disabled = true; b.textContent = T.loading;
+      var pw = document.getElementById("ghpw").value, tok = null;
+      for (var i = 0; i < list.length && !tok; i++) { try { tok = await unseal(pw, list[i]); } catch (x) {} }
+      if (!tok) return passForm(T.pwBad);
+      try { localStorage.setItem(KEY, tok); localStorage.setItem(MODE, "pass"); } catch (x) {}
+      start();
+    };
+  }
+  async function commitFiles(files, message) {
+    var tree = [];
+    for (var i = 0; i < files.length; i++) {
+      var r = await gh("/git/blobs", { method: "POST", body: JSON.stringify({ content: b64text(files[i][1]), encoding: "base64" }) });
+      tree.push({ path: path(files[i][0]), mode: "100644", type: "blob", sha: r.sha });
+    }
+    var ref = await gh("/git/ref/heads/" + encodeURIComponent(BR));
+    var head = await gh("/git/commits/" + ref.object.sha);
+    var nt = await gh("/git/trees", { method: "POST", body: JSON.stringify({ base_tree: head.tree.sha, tree: tree }) });
+    var nc = await gh("/git/commits", { method: "POST", body: JSON.stringify({ message: message, tree: nt.sha, parents: [ref.object.sha] }) });
+    await gh("/git/refs/heads/" + encodeURIComponent(BR), { method: "PATCH", body: JSON.stringify({ sha: nc.sha }) });
+  }
+  async function volunteerPanel() {
+    var mode = ""; try { mode = localStorage.getItem(MODE) || ""; } catch (e) {}
+    if (mode === "pass" || document.getElementById("ghvp")) return;
+    var list = await volunteers();
+    var box = document.createElement("section");
+    box.id = "ghvp";
+    box.style.cssText = "max-width:1240px;margin:0 auto 120px;padding:0 max(16px,3vw)";
+    box.innerHTML = '<div class="panel"><h2>' + T.vTitle + '</h2><p class="muted" style="font-size:14px">' + T.vNote + '</p>' +
+      '<p style="font-size:13px">' + T.vCount + ': <b id="ghvc">' + list.length + '</b></p>' +
+      '<div class="contacts"><input id="ghvpw" type="text" autocomplete="off" spellcheck="false" style="padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);min-width:0;flex:1 1 220px">' +
+      '<button class="btn sm" id="ghvs">' + T.vSet + '</button><button class="btn ghost sm" id="ghvr">' + T.vReset + '</button></div></div>';
+    document.body.insertBefore(box, document.getElementById("toast"));
+    var A = window.__TTS;
+    document.getElementById("ghvs").onclick = async function () {
+      var pw = document.getElementById("ghvpw").value.trim();
+      if (pw.length < 10) return A.toast(T.vShort);
+      try {
+        var cur = await volunteers();
+        cur.push(await seal(pw, token()));
+        await commitFiles([["volunteers.json", JSON.stringify({ v: 1, entries: cur }, null, 1)]], "Пароль для волонтёров");
+        document.getElementById("ghvpw").value = ""; document.getElementById("ghvc").textContent = cur.length; A.toast(T.vDone);
+      } catch (e) { console.error(e); A.toast(T.err); }
+    };
+    document.getElementById("ghvr").onclick = async function () {
+      try {
+        await commitFiles([["volunteers.json", JSON.stringify({ v: 1, entries: [] })]], "Отключены пароли волонтёров");
+        document.getElementById("ghvc").textContent = "0"; A.toast(T.vOff);
+      } catch (e) { console.error(e); A.toast(T.err); }
+    };
+  }
+
   function loginForm(msg) {
     var pat = "https://github.com/settings/personal-access-tokens/new?name=" + encodeURIComponent("Time to Save site") +
       "&description=" + encodeURIComponent("Edit the Time to Save site") + "&target_name=" + encodeURIComponent(CFG.owner) + "&expires_in=366&contents=write";
@@ -57,19 +146,19 @@
       '<p style="font-size:13px"><a href="./">' + T.toSite + '</a></p></form></section>';
     document.getElementById("ghf").onsubmit = function (e) {
       e.preventDefault();
-      try { localStorage.setItem(KEY, document.getElementById("ght").value.trim()); } catch (x) {}
+      try { localStorage.setItem(KEY, document.getElementById("ght").value.trim()); localStorage.setItem(MODE, "key"); } catch (x) {}
       start();
     };
   }
 
   async function start() {
-    if (!token()) return loginForm();
+    if (!token()) return passForm();
     try {
       var repo = await gh("");
       if (!repo.permissions || !repo.permissions.push) throw new Error("readonly");
     } catch (e) {
-      try { localStorage.removeItem(KEY); } catch (x) {}
-      return loginForm(T.bad);
+      var wasPass = false; try { wasPass = localStorage.getItem(MODE) === "pass"; localStorage.removeItem(KEY); } catch (x) {}
+      return wasPass ? passForm(T.pwBad) : loginForm(T.bad);
     }
     document.getElementById("app").innerHTML = '<p class="muted" style="padding:48px;text-align:center">' + T.loading + '</p>';
     window.TTS_ADMIN = true;
@@ -97,6 +186,7 @@
     setInterval(bar, 700);
     window.addEventListener("beforeunload", function (e) { if (!busy && dirty()) { e.preventDefault(); e.returnValue = ""; } });
     footer();
+    volunteerPanel();
   }
   function dirty() { return window.__TTS && snap(window.__TTS.state) !== baseline; }
   function footer() {
@@ -104,7 +194,7 @@
     var b = document.createElement("button");
     b.id = "ghout"; b.className = "linkbtn"; b.textContent = T.signout;
     b.style.cssText = "position:fixed;right:16px;top:12px;z-index:30;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:6px 12px";
-    b.onclick = function () { try { localStorage.removeItem(KEY); } catch (e) {} location.reload(); };
+    b.onclick = function () { try { localStorage.removeItem(KEY); localStorage.removeItem(MODE); } catch (e) {} location.reload(); };
     document.body.appendChild(b);
   }
   function bar() {
