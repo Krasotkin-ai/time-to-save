@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Time to Save — отчёт о деньгах</title>
+<meta name="description" content="Сколько пришло донатов и на что потрачены деньги, с чеками.">
+<link rel="stylesheet" href="app.css">
+<style>
+.rsum{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:20px 0}
+.rsum div{border:1px solid var(--line);border-radius:8px;padding:14px;background:var(--surface)}
+.rsum span{display:block;font-size:12px;color:var(--muted)}
+.rsum b{font:700 clamp(18px,3vw,26px) var(--f-display)}
+.rst{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:28px}
+.rst div{font-size:13px;color:var(--muted)}
+.rst b{display:block;color:var(--ink);font-size:15px}
+.rsec{margin:28px 0 10px}
+.rl{border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+.ri{display:flex;gap:12px;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line)}
+.ri:last-child{border-bottom:0}
+.ri .m{flex:1;min-width:0}
+.ri .m b{font-weight:600;overflow-wrap:anywhere}
+.ri .s{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+.ri .a{white-space:nowrap;font:700 15px var(--f-display);font-variant-numeric:tabular-nums}
+.rc img{width:48px;height:48px;object-fit:cover;border-radius:6px;display:block;border:1px solid var(--line)}
+@media (max-width:640px){.rsum,.rst{grid-template-columns:repeat(2,minmax(0,1fr))}.rsum div:last-child{grid-column:1/-1}}
+</style>
+</head>
+<body>
+<div id="app">
+<header class="top"><a class="brand" href="./" style="color:inherit;text-decoration:none"><span class="mark" aria-hidden="true">TS</span><b id="rname">Time to Save</b></a><a href="./" style="font-size:14px" id="rback">К собакам</a></header>
+<main id="rv"><p class="muted" style="padding:48px 0;text-align:center">Загружаю…</p></main>
+</div>
+<script>
+(function () {
+  "use strict";
+  var ru = (navigator.language || "ru").toLowerCase().indexOf("ru") === 0 || (function () { try { return localStorage.getItem("tts.lang") === "ru"; } catch (e) { return false; } })();
+  var T = ru ? {
+    title: "Отчёт о деньгах", lead: "Все донаты и расходы, которые записали волонтёры. У расходов есть фото чеков, нажмите, чтобы открыть.",
+    inW: "Пришло", outW: "Потрачено", left: "Остаток", byStage: "Донаты по этапам", don: "Донаты", exp: "Расходы", date: "Дата",
+    who: "От кого", what: "На что", dog: "Собака", stage: "Этап", amount: "Сумма", rec: "Чек", anon: "Аноним", fund: "Общий фонд",
+    none: "Пока нет записей.", back: "К собакам", err: "Не удалось загрузить отчёт. Обновите страницу.", upd: "Обновлено",
+    st: { capture: "Отлов", vet: "Ветеринар", foster: "Передержка", home: "Дом" }
+  } : {
+    title: "Money report", lead: "Every donation and expense our volunteers logged. Expenses have receipt photos; tap one to open it.",
+    inW: "Received", outW: "Spent", left: "Balance", byStage: "Donations by stage", don: "Donations", exp: "Expenses", date: "Date",
+    who: "From", what: "Spent on", dog: "Dog", stage: "Stage", amount: "Amount", rec: "Receipt", anon: "Anonymous", fund: "General fund",
+    none: "No entries yet.", back: "To the dogs", err: "Could not load the report. Reload the page.", upd: "Updated",
+    st: { capture: "Rescue", vet: "Vet", foster: "Foster", home: "Home" }
+  };
+  document.documentElement.lang = ru ? "ru" : "en";
+  document.getElementById("rback").textContent = T.back;
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  var cur = "₸";
+  function money(n) { return (Math.round(n * 100) / 100).toLocaleString(ru ? "ru-RU" : "en-GB", { maximumFractionDigits: 2 }) + " " + cur; }
+  function byDate(a, b) { return (b.date || "").localeCompare(a.date || ""); }
+  fetch("data.json?t=" + Date.now(), { cache: "no-store" }).then(function (r) { return r.json(); }).then(function (j) {
+    var s = j.settings || {}, L = j.ledger || [], dogs = {};
+    cur = s.currency || "₸";
+    (j.dogs || []).forEach(function (d) { dogs[d.id] = d; });
+    if (s.name) { document.getElementById("rname").textContent = s.name; document.title = s.name + " — " + T.title; }
+    var ins = L.filter(function (e) { return e.type === "in"; }).sort(byDate), outs = L.filter(function (e) { return e.type === "out"; }).sort(byDate);
+    var ti = ins.reduce(function (a, e) { return a + (+e.amount || 0); }, 0), to = outs.reduce(function (a, e) { return a + (+e.amount || 0); }, 0);
+    var stg = { capture: 0, vet: 0, foster: 0, home: 0 };
+    ins.forEach(function (e) { if (e.stage in stg) stg[e.stage] += +e.amount || 0; });
+    function dogTxt(e) { var d = e.dog && dogs[e.dog]; return e.dog ? e.dog + (d && d.name ? " · " + d.name : "") : T.fund; }
+    function sub(e) { return [e.date, dogTxt(e), T.st[e.stage] || ""].filter(Boolean).map(esc).join(" · ") + (e.note ? "<br>" + esc(e.note) : ""); }
+    function list(arr, fn) { return arr.length ? '<div class="rl">' + arr.map(fn).join("") + "</div>" : '<p class="muted">' + T.none + "</p>"; }
+    var h = '<section class="hero" style="padding:28px 0 0"><h1>' + T.title + "</h1><p>" + T.lead + "</p></section>" +
+      '<div class="rsum"><div><span>' + T.inW + "</span><b>" + money(ti) + "</b></div><div><span>" + T.outW + "</span><b>" + money(to) + "</b></div><div><span>" + T.left + "</span><b>" + money(ti - to) + "</b></div></div>" +
+      '<h2 class="rsec" style="font-size:18px">' + T.byStage + '</h2><div class="rst">' + Object.keys(stg).map(function (k) { return "<div>" + T.st[k] + "<b>" + money(stg[k]) + "</b></div>"; }).join("") + "</div>";
+    h += '<h2 class="rsec" style="font-size:18px">' + T.exp + "</h2>" + list(outs, function (e) {
+      var rc = e.receipt ? '<a class="rc" href="p-f-' + encodeURIComponent(e.receipt) + '.jpg" target="_blank" rel="noopener" aria-label="' + T.rec + '"><img src="p-t-' + encodeURIComponent(e.receipt) + '.jpg" alt="' + T.rec + '" loading="lazy"></a>' : "";
+      return '<div class="ri">' + rc + '<div class="m"><b>' + esc(e.what) + '</b><span class="s">' + sub(e) + '</span></div><span class="a">' + money(+e.amount || 0) + "</span></div>";
+    });
+    h += '<h2 class="rsec" style="font-size:18px">' + T.don + "</h2>" + list(ins, function (e) {
+      return '<div class="ri"><div class="m"><b>' + (e.who ? esc(e.who) : '<span class="muted" style="font-weight:400">' + T.anon + "</span>") + '</b><span class="s">' + sub(e) + '</span></div><span class="a">+' + money(+e.amount || 0) + "</span></div>";
+    });
+    if (j.updated) h += '<p class="foot">' + T.upd + ": " + esc(new Date(j.updated).toLocaleDateString(ru ? "ru-RU" : "en-GB")) + "</p>";
+    document.getElementById("rv").innerHTML = h;
+  }).catch(function () { document.getElementById("rv").innerHTML = '<p class="muted" style="padding:48px 0;text-align:center">' + T.err + "</p>"; });
+})();
+</script>
+</body>
+</html>
