@@ -218,6 +218,7 @@
     var ms = document.createElement("script"); ms.src = "money.js"; document.body.appendChild(ms);
     var gs = document.createElement("script"); gs.src = "groups.js"; document.body.appendChild(gs);
     var cs = document.createElement("script"); cs.src = "cards.js"; document.body.appendChild(cs);
+    var cu = document.createElement("script"); cu.src = "curators.js"; document.body.appendChild(cu);
   }
   function dirty() { return window.__TTS && snap(window.__TTS.state) !== baseline; }
   function footer() {
@@ -282,6 +283,10 @@
         var a = +((o.funds || {})[k] || {}).raised || 0, b = +((d.funds || {})[k] || {}).raised || 0;
         if (a !== b) add(d.id, "Собрано на этапе «" + STN[k] + "»: " + num(a) + " → " + num(b));
       });
+      var oc = {}, nc = {};
+      (o.curators || []).forEach(function (c) { oc[c.id] = c; });
+      (d.curators || []).forEach(function (c) { nc[c.id] = 1; if (!oc[c.id]) add(d.id, (c.role === "main" ? "Новый куратор: " : "Новый сокуратор: ") + (c.name || "аноним") + ", " + num(c.amount) + (c.period === "once" ? " разово" : " в месяц")); });
+      Object.keys(oc).forEach(function (id) { if (!nc[id]) add(d.id, "Куратор убран: " + (oc[id].name || "аноним")); });
     });
     Object.keys(old).forEach(function (id) { if (!cur[id]) add(id, "Карточка удалена"); });
     var ol = {}, nl = {};
