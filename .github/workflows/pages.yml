@@ -42,6 +42,13 @@ jobs:
           npm pack @tensorflow/tfjs@4.22.0 --silent
           tar xzf tensorflow-tfjs-4.22.0.tgz package/dist/tf.min.js
           cp package/dist/tf.min.js _site/lib/
+          npm pack tesseract.js@5.1.1 tesseract.js-core@5.1.1 @tesseract.js-data/rus@1.0.0 @tesseract.js-data/eng@1.0.0 pdfjs-dist@4.10.38 --silent > /dev/null
+          mkdir -p _site/lib/tesseract _site/lib/tessdata _site/lib/pdfjs ocr
+          tar xzf tesseract.js-5.1.1.tgz -C ocr && cp ocr/package/dist/tesseract.min.js ocr/package/dist/worker.min.js _site/lib/tesseract/ && rm -rf ocr/package
+          tar xzf tesseract.js-core-5.1.1.tgz -C ocr && cp ocr/package/tesseract-core-simd-lstm.wasm.js ocr/package/tesseract-core-lstm.wasm.js _site/lib/tesseract/ && rm -rf ocr/package
+          tar xzf tesseract.js-data-rus-1.0.0.tgz -C ocr && cp ocr/package/4.0.0_best_int/rus.traineddata.gz _site/lib/tessdata/ && rm -rf ocr/package
+          tar xzf tesseract.js-data-eng-1.0.0.tgz -C ocr && cp ocr/package/4.0.0_best_int/eng.traineddata.gz _site/lib/tessdata/ && rm -rf ocr/package
+          tar xzf pdfjs-dist-4.10.38.tgz -C ocr && cp ocr/package/build/pdf.min.mjs ocr/package/build/pdf.worker.min.mjs _site/lib/pdfjs/ && rm -rf ocr/package
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
