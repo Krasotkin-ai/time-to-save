@@ -3,8 +3,8 @@
   "use strict";
   var STAGES = ["capture", "vet", "foster", "home"];
   var L = {
-    ru: { capture: "Отлов", vet: "Ветеринар", foster: "Передержка", home: "Дом", now: "Сейчас", atHome: "Уже дома", noGoal: "цель не указана" },
-    en: { capture: "Rescue", vet: "Vet", foster: "Foster", home: "Home", now: "Now", atHome: "Already home", noGoal: "no goal set" }
+    ru: { capture: "Отлов", vet: "Ветеринар", foster: "Передержка", home: "Дом", now: "Сейчас", atHome: "Уже дома", noGoal: "цель не указана", held: "В резерве у", until: "до" },
+    en: { capture: "Rescue", vet: "Vet", foster: "Foster", home: "Home", now: "Now", atHome: "Already home", noGoal: "no goal set", held: "Reserved by", until: "until" }
   };
   var css = document.createElement("style");
   css.textContent =
@@ -20,7 +20,8 @@
     ".cst i{grid-column:1/-1;height:3px;border-radius:99px;background:var(--sunk);overflow:hidden;display:block}" +
     ".cst i em{display:block;height:100%;background:var(--accent);border-radius:99px}" +
     ".cst .done i em{background:var(--ok)}" +
-    ".card .where.cwh{color:var(--ink);font-size:13px;margin-top:6px}.card .where.cwh b{font-weight:600}";
+    ".card .where.cwh{color:var(--ink);font-size:13px;margin-top:6px}.card .where.cwh b{font-weight:600}" +
+    ".card .where.cwh .rsv{display:block;color:var(--muted);font-size:12px;margin-top:2px}";
   document.head.appendChild(css);
 
   function lang() { var A = window.__TTS; return A && A.ui && A.ui.lang === "en" ? "en" : "ru"; }
@@ -39,17 +40,32 @@
     var place = [d.location, d.city].filter(Boolean).join(", ");
     var where = d.status === "adopted" ? "<b>" + t.atHome + "</b>" + (place ? " · " + esc(place) : "")
       : t.now + ": <b>" + t[STAGES[now]] + "</b>" + (place ? " · " + esc(place) : "");
+    if (d.status === "reserved" && d.reserve && d.reserve.group) {
+      var u = String(d.reserve.until || "").split("-");
+      where += '<span class="rsv">' + t.held + " «" + esc(d.reserve.group) + "»" + (u.length === 3 ? " " + t.until + " " + u[2] + "." + u[1] : "") + "</span>";
+    }
     return { stages: rows, where: where };
   }
 
+  function today() { var d = new Date(); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10); }
+  // A reservation past its date no longer holds the dog.
+  function expire(A) {
+    if (A.ui && A.ui.admin) return;
+    var t = today(), changed = false;
+    A.state.dogs.forEach(function (d) {
+      if (d.reserve && d.reserve.until && d.reserve.until < t) { delete d.reserve; if (d.status === "reserved") d.status = "available"; changed = true; }
+    });
+    if (changed) { A.resetCards(); A.render(); }
+  }
   function apply() {
     var A = window.__TTS; if (!A || !A.state || !A.state.dogs) return;
+    expire(A);
     var st = A.state, byId = {};
     st.dogs.forEach(function (d) { byId[d.id] = d; });
     document.querySelectorAll(".card").forEach(function (card) {
       var tid = card.querySelector(".tid"); if (!tid) return;
       var d = byId[tid.textContent.trim()]; if (!d) return;
-      var sig = JSON.stringify([d.funds, d.stage, d.status, d.city, d.location, st.settings.goals, st.settings.currency, lang()]);
+      var sig = JSON.stringify([d.funds, d.stage, d.status, d.reserve, d.city, d.location, st.settings.goals, st.settings.currency, lang()]);
       if (card.dataset.cst === sig) return;
       card.dataset.cst = sig;
       var b = block(d, st), cb = card.querySelector(".cb");
