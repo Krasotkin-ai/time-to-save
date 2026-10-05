@@ -3,23 +3,23 @@
   "use strict";
   var STAGES = ["capture", "vet", "foster", "home"];
   var L = {
-    ru: { capture: "Отлов", vet: "Ветеринар", foster: "Передержка", home: "Дом", now: "Сейчас", atHome: "Уже дома", noGoal: "цель не указана", held: "В резерве у", until: "до" },
-    en: { capture: "Rescue", vet: "Vet", foster: "Foster", home: "Home", now: "Now", atHome: "Already home", noGoal: "no goal set", held: "Reserved by", until: "until" }
+    ru: { capture: "Отлов", vet: "Ветеринар", foster: "Передержка", home: "Дом", now: "Сейчас", atHome: "Уже дома", noGoal: "цель не указана", held: "В резерве у", until: "до", of: "из" },
+    en: { capture: "Rescue", vet: "Vet", foster: "Foster", home: "Home", now: "Now", atHome: "Already home", noGoal: "no goal set", held: "Reserved by", until: "until", of: "of" }
   };
   var css = document.createElement("style");
   css.textContent =
     ".card .mini,.card .minitxt{display:none}" +
-    ".cst{display:grid;gap:5px;margin-top:8px}" +
-    ".cst div{display:grid;grid-template-columns:1fr auto;column-gap:8px;row-gap:3px;align-items:baseline;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}" +
-    ".cst span:first-child{display:flex;align-items:center;gap:5px;min-width:0}" +
-    ".cst span:first-child::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--sunk);border:1px solid var(--line);flex:none}" +
-    ".cst .done span:first-child::before{background:var(--ok);border-color:var(--ok)}" +
-    ".cst .now span:first-child::before{background:var(--accent);border-color:var(--accent)}" +
-    ".cst .now{color:var(--ink)}.cst .now span:first-child{font-weight:600}" +
-    ".cst b{color:var(--ink);font-weight:600}" +
-    ".cst i{grid-column:1/-1;height:3px;border-radius:99px;background:var(--sunk);overflow:hidden;display:block}" +
-    ".cst i em{display:block;height:100%;background:var(--accent);border-radius:99px}" +
-    ".cst .done i em{background:var(--ok)}" +
+    ".cst{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;margin-top:8px}" +
+    ".cst div{display:flex;flex-direction:column;gap:3px;min-width:0;font-size:11px;line-height:1.25;color:var(--muted);font-variant-numeric:tabular-nums}" +
+    ".cst i{display:block;height:6px;border-radius:99px;background:var(--sunk);overflow:hidden;margin-bottom:2px}" +
+    ".cst i em{display:block;height:100%;border-radius:99px;background:var(--accent);opacity:.35}" +
+    ".cst .done i{background:var(--ok)}.cst .done i em{display:none}" +
+    ".cst .now i{background:var(--accent)}.cst .now i em{display:none}" +
+    ".cst .nm{white-space:nowrap}.card .cb{container-type:inline-size}" +
+    "@container (max-width:330px){.cst div{font-size:10px;letter-spacing:-.02em}.cst .of{font-size:9px}}" +
+    "@container (max-width:250px){.cst{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:8px}}" +
+    ".cst .now .nm{color:var(--accent);font-weight:700}.cst .done .nm{color:var(--ink)}" +
+    ".cst b{color:var(--ink);font-weight:600}.cst .of{font-size:10px}" +
     ".card .where.cwh{color:var(--ink);font-size:13px;margin-top:6px}.card .where.cwh b{font-weight:600}" +
     ".card .where.cwh .rsv{display:block;color:var(--muted);font-size:12px;margin-top:2px}";
   document.head.appendChild(css);
@@ -35,7 +35,7 @@
       var f = (d.funds || {})[s] || {}, r = +f.raised || 0, g = +f.goal || +goals[s] || 0;
       var cls = i < now ? "done" : i === now ? "now" : "next";
       var pct = g ? Math.min(100, Math.round(r / g * 100)) : (r ? 100 : 0);
-      return '<div class="' + cls + '"><span>' + t[s] + "</span><span>" + (g ? "<b>" + money(r, "") + "</b> / " + money(g, cur) : "<b>" + money(r, cur) + "</b>") + '</span><i><em style="width:' + pct + '%"></em></i></div>';
+      return '<div class="' + cls + '"' + (i === now ? ' aria-current="step"' : "") + '><i><em style="width:' + pct + '%"></em></i><span class="nm">' + t[s] + "</span><span><b>" + money(r, cur) + "</b></span>" + (g ? '<span class="of">' + t.of + " " + money(g, "") + "</span>" : "") + "</div>";
     }).join("");
     var place = [d.location, d.city].filter(Boolean).join(", ");
     var where = d.status === "adopted" ? "<b>" + t.atHome + "</b>" + (place ? " · " + esc(place) : "")
