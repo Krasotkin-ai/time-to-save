@@ -214,6 +214,7 @@
     var old = form.editId ? ledger().filter(function (x) { return x.id === form.editId; })[0] : null;
     var e = old || { id: newId() };
     if (!old && window.__GH) e.g = window.__GH.group();
+    if (!old && window.__FUND && window.__FUND()) e.fund = window.__FUND();
     if (old) bump(old, -1);
     e.type = form.type; e.date = f.elements.date.value || today(); e.amount = amt; e.dog = f.elements.dog.value; e.stage = f.elements.stage.value; e.note = f.elements.note.value.trim();
     if (amt > 0) delete e.noAmount; else e.noAmount = true;
@@ -246,7 +247,7 @@
       try { fh = await fileHash(files[i]); } catch (x) {}
       if (fh && seen[fh]) { dup++; continue; }
       try { r = await readReceipt(files[i]); } catch (x) { continue; }
-      var e = { id: newId(), type: "out", date: r.date || today(), amount: r.ok ? r.amount : 0, dog: dog, stage: stage, note: "", what: r.ok && r.seller ? r.seller : T.bought, auto: true, g: window.__GH ? window.__GH.group() : "" };
+      var e = { id: newId(), type: "out", date: r.date || today(), amount: r.ok ? r.amount : 0, dog: dog, stage: stage, note: "", what: r.ok && r.seller ? r.seller : T.bought, auto: true, g: window.__GH ? window.__GH.group() : "", fund: window.__FUND ? window.__FUND() : "" };
       if (fh) { e.fh = fh; seen[fh] = 1; }
       if (!r.ok) e.noAmount = true;
       attachPic(e, r);
