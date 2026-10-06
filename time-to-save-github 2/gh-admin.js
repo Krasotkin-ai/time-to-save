@@ -220,6 +220,8 @@
     var cs = document.createElement("script"); cs.src = "cards.js"; document.body.appendChild(cs);
     var cu = document.createElement("script"); cu.src = "curators.js"; document.body.appendChild(cu);
     var vi = document.createElement("script"); vi.src = "video.js"; document.body.appendChild(vi);
+    var fu = document.createElement("script"); fu.src = "funds.js"; document.body.appendChild(fu);
+    var sg = document.createElement("script"); sg.src = "stages.js"; document.body.appendChild(sg);
   }
   function dirty() { return window.__TTS && snap(window.__TTS.state) !== baseline; }
   function footer() {
@@ -284,6 +286,8 @@
         var a = +((o.funds || {})[k] || {}).raised || 0, b = +((d.funds || {})[k] || {}).raised || 0;
         if (a !== b) add(d.id, "Собрано на этапе «" + STN[k] + "»: " + num(a) + " → " + num(b));
       });
+      ["capture", "vet", "foster", "home"].forEach(function (k) { var a = ((o.plan || {})[k] || {}), b = ((d.plan || {})[k] || {}); if (!a.done && b.done) add(d.id, "Этап «" + STN[k] + "» готов"); if ((a.start || "") !== (b.start || "") || (a.end || "") !== (b.end || "")) add(d.id, "Даты этапа «" + STN[k] + "»: " + [b.start, b.end].filter(Boolean).join(" – ")); var ga = +((o.funds || {})[k] || {}).goal || 0, gb = +((d.funds || {})[k] || {}).goal || 0; if (ga !== gb) add(d.id, "Нужно на этап «" + STN[k] + "»: " + num(ga) + " → " + num(gb)); });
+      if ((o.lead || "") !== (d.lead || "")) add(d.id, d.lead ? "Взята в фонд группы «" + d.lead + "»" : "Убрана из фонда группы «" + o.lead + "»");
       var oc = {}, nc = {};
       (o.curators || []).forEach(function (c) { oc[c.id] = c; });
       (d.curators || []).forEach(function (c) { nc[c.id] = 1; if (!oc[c.id]) add(d.id, (c.role === "main" ? "Новый куратор: " : "Новый сокуратор: ") + (c.name || "аноним") + ", " + num(c.amount) + (c.period === "once" ? " разово" : " в месяц")); });
@@ -337,6 +341,7 @@
       baseline = snap(st);
       A.resetCards(); A.render();
       A.toast(T.done);
+      try { window.dispatchEvent(new Event("tts:published")); } catch (x) {}
     } catch (e) {
       console.error(e);
       A.toast(e.status === 401 || e.status === 403 ? T.bad : T.err);
