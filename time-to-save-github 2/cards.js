@@ -5,9 +5,9 @@
   var STAGES = ["capture", "vet", "foster", "home"];
   var L = {
     ru: { capture: "Отлов", vet: "Ветеринар", foster: "Передержка", home: "Дом", now: "Сейчас", atHome: "Уже дома", held: "В резерве у", until: "до",
-      lab: { vet: "Вете&shy;ринар", foster: "Пере&shy;держка" }, raised: "собрано", of: "из", need: "Не хватает", onStage: "на этап", noGoal: "Собрано на этом этапе", done: "Этап пройден", homeDone: "Нашла свой дом" },
+      lab: { vet: "Вете&shy;ринар", foster: "Пере&shy;держка" }, raised: "собрано", of: "из", need: "Не хватает", onStage: "на этап", noGoal: "Собрано на этом этапе", done: "Этап пройден", homeDone: "Нашла свой дом", ledBy: "Спасает группа «%s» из общего фонда", spent: "Потрачено на собаку" },
     en: { capture: "Rescue", vet: "Vet", foster: "Foster", home: "Home", now: "Now", atHome: "Already home", held: "Reserved by", until: "until",
-      lab: {}, raised: "raised", of: "of", need: "Still needed", onStage: "for", noGoal: "Raised for this stage", done: "Stage done", homeDone: "Found a home" }
+      lab: {}, raised: "raised", of: "of", need: "Still needed", onStage: "for", noGoal: "Raised for this stage", done: "Stage done", homeDone: "Found a home", ledBy: "Rescued by “%s” from the common fund", spent: "Spent on this dog" }
   };
   var ICON = {
     capture: '<path d="M8 13.5c-2 0-3.5-1.2-3.5-2.7 0-1.3 1.6-3.3 3.5-3.3s3.5 2 3.5 3.3c0 1.5-1.5 2.7-3.5 2.7z"/><circle cx="3.6" cy="6.6" r="1.4"/><circle cx="6" cy="3.6" r="1.4"/><circle cx="10" cy="3.6" r="1.4"/><circle cx="12.4" cy="6.6" r="1.4"/>',
@@ -67,7 +67,12 @@
       return '<li class="' + cls + '" style="--sc:var(--c-' + s + ')"' + (i === now ? ' aria-current="step"' : "") + '><span class="dot">' + svg(i < now ? "check" : s) + '</span><span class="nm">' + (t.lab[s] || t[s]) + '</span><span class="am">' + money(f.r, cur) + "</span></li>";
     }).join("");
     var place = [d.location, d.city].filter(Boolean).join(", "), f = fund(focus), box;
-    if (adopted) {
+    var G = st.settings.groups || {}, fundG = d.lead && G[d.lead] && G[d.lead].mode === "fund" ? d.lead : "";
+    if (fundG && !adopted) {
+      var spent = 0; (st.ledger || []).forEach(function (e) { if (e.dog === d.id && e.type === "out") spent += +e.amount || 0; });
+      box = '<div class="hd"><span class="pin"></span>' + t.now + ": <b>" + t[focus] + "</b></div>" + (place ? '<div class="pl">' + esc(place) + "</div>" : "") +
+        '<div class="nums"><span>' + t.ledBy.replace("%s", esc(fundG)) + "</span></div>" + (spent ? '<div class="nums"><span>' + t.spent + ": <b>" + money(spent, cur) + "</b></span></div>" : "");
+    } else if (adopted) {
       box = '<div class="hd"><span class="pin"></span><b>' + t.homeDone + "</b></div>" + (place ? '<div class="pl">' + esc(place) + "</div>" : "");
     } else {
       var pct = f.g ? Math.min(100, Math.round(f.r / f.g * 100)) : 0;
@@ -103,7 +108,7 @@
     document.querySelectorAll(".card").forEach(function (card) {
       var tid = card.querySelector(".tid"); if (!tid) return;
       var d = byId[tid.textContent.trim()]; if (!d) return;
-      var sig = JSON.stringify([d.funds, d.stage, d.status, d.reserve, d.city, d.location, st.settings.goals, st.settings.currency, lang()]);
+      var sig = JSON.stringify([d.funds, d.stage, d.status, d.reserve, d.city, d.location, d.lead, (st.settings.groups || {})[d.lead], st.settings.goals, st.settings.currency, lang(), (st.ledger || []).length]);
       if (card.dataset.way === sig) return;
       card.dataset.way = sig;
       var cb = card.querySelector(".cb"), box = cb.querySelector(".way");
