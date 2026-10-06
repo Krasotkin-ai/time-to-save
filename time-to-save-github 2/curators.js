@@ -18,7 +18,8 @@
       send: "Отправить в", copy: "Скопировать текст", copied: "Текст скопирован. Вставьте его в чат.",
       after: "Волонтёры ответят и подтвердят. После этого вы появитесь на странице собаки.", noContacts: "Контакты для связи пока не указаны. Скопируйте текст и отправьте волонтёрам.",
       hello: "Здравствуйте! Хочу стать", asMain: "куратором", asCo: "сокуратором", dogW: "собаки", canPay: "Могу помогать", nameW: "Имя", showW: "Показывать имя на сайте", yes: "да", no: "нет",
-      pickAmount: "Выберите сумму",
+      pickAmount: "Выберите сумму", wholeWay: "Весь путь собаки", wholeLeft: "осталось собрать",
+      fullNote: "Куратор оплачивает весь путь собаки: отлов, такси, ветеринара, передержку и поиск дома. Собак мы забираем сразу, не дожидаясь сбора, поэтому каждая неоплаченная часть ложится долгом на волонтёров. Когда вся сумма будет собрана, волонтёры напишут вам, что путь собаки полностью оплачен.",
       adm: "Кураторы", admTitle: "Кураторы собаки", add: "Добавить", del: "Убрать", nameOpt: "Имя (как на сайте)", saved: "Сохранено. Не забудьте опубликовать.",
       admNote: "Добавляйте человека после того, как он написал и вы договорились. Имя на сайте видно, только если стоит галочка."
     },
@@ -32,7 +33,8 @@
       send: "Send via", copy: "Copy text", copied: "Text copied. Paste it into the chat.",
       after: "Volunteers will reply and confirm. Then you will appear on the dog's page.", noContacts: "No contacts set yet. Copy the text and send it to the volunteers.",
       hello: "Hello! I would like to become a", asMain: "curator", asCo: "co-curator", dogW: "for dog", canPay: "I can give", nameW: "Name", showW: "Show name on the site", yes: "yes", no: "no",
-      pickAmount: "Choose an amount",
+      pickAmount: "Choose an amount", wholeWay: "The dog's whole way", wholeLeft: "still needed",
+      fullNote: "A curator pays for the dog's whole way: rescue, taxi, vet, foster and finding a home. We take dogs out right away without waiting for the money, so every unpaid part becomes the volunteers' debt. When the full sum is raised, volunteers will message you that the dog's way is fully paid.",
       adm: "Curators", admTitle: "Dog's curators", add: "Add", del: "Remove", nameOpt: "Name (as on the site)", saved: "Saved. Remember to publish.",
       admNote: "Add a person after they wrote to you and you agreed. The name is shown on the site only if the box is ticked."
     }
@@ -94,9 +96,10 @@
     return t.hello + " " + (f.role === "main" ? t.asMain : t.asCo) + " " + t.dogW + " " + d.id + (d.name ? " (" + d.name + ")" : "") + ".\n" +
       t.canPay + ": " + amt + ".\n" + (f.name ? t.nameW + ": " + f.name + ".\n" : "") + t.showW + ": " + (f.show ? t.yes : t.no) + ".\n" + location.origin + location.pathname;
   }
-  function openOffer(id) {
+  function openOffer(id, preset) {
     var d = dog(id); if (!d) return;
     f = { id: id, role: hasMain(d) ? "co" : "main", period: "month", amount: 5000, custom: false, name: "", show: true };
+    if (preset) Object.keys(preset).forEach(function (k) { f[k] = preset[k]; });
     drawOffer();
     if (!dlg.open) dlg.showModal();
   }
@@ -104,7 +107,7 @@
     var d = dog(f.id), t = T(), cs = contacts();
     function chip(group, val, label) { return '<button type="button" class="chip" data-' + group + '="' + val + '" aria-pressed="' + (f[group] === val) + '">' + label + "</button>"; }
     dlg.innerHTML = '<button class="x" aria-label="×" data-close>×</button><div class="in">' +
-      "<h2>" + t.title + "</h2><p class=\"lead\">" + esc(d.id + (d.name ? " · " + d.name : "")) + "</p><p class=\"lead\">" + t.intro + "</p>" +
+      "<h2>" + t.title + "</h2><p class=\"lead\">" + esc(d.id + (d.name ? " · " + d.name : "")) + "</p><p class=\"lead\">" + t.intro + "</p>" + fullNote(d) +
       '<div class="grp"><span>' + t.role + '</span><div class="chips">' + chip("role", "main", t.main) + chip("role", "co", t.co) + "</div></div>" +
       '<div class="grp"><span>' + t.period + '</span><div class="chips">' + chip("period", "month", t.monthly) + chip("period", "once", t.oneTime) + "</div></div>" +
       '<div class="grp"><span>' + t.amount + '</span><div class="chips">' + AMOUNTS.map(function (a) { return '<button type="button" class="chip" data-amt="' + a + '" aria-pressed="' + (!f.custom && f.amount === a) + '">' + money(a) + "</button>"; }).join("") +
@@ -130,6 +133,16 @@
     dlg.querySelector("#curcopy").onclick = copy;
     dlg.querySelectorAll("[data-send]").forEach(function (a) { a.addEventListener("click", function (e) { if (!f.amount) { e.preventDefault(); return A.toast(t.pickAmount); } copy(); }); });
   }
+
+  // Curator of one dog in a fund group pays for the whole way: rescue, transport, vet, foster, finding a home.
+  function fullNote(d) {
+    if (!f.full || !window.__STAGES) return "";
+    var t = T(), w = window.__STAGES.whole(d);
+    return '<div style="padding:12px;border-radius:10px;background:var(--accent-soft);font-size:14px;display:flex;flex-direction:column;gap:4px">' +
+      (w.g ? "<span>" + t.wholeWay + ": <b>" + money(w.g) + "</b> · " + t.wholeLeft + " <b>" + money(Math.max(0, w.g - w.r)) + "</b></span>" : "") +
+      "<span>" + t.fullNote + "</span></div>";
+  }
+  window.__CUR = { open: function (id, preset) { openOffer(id, preset); } };
 
   /* ---------- admin: confirmed curators ---------- */
   var adm = { id: null };
@@ -210,7 +223,10 @@
   document.addEventListener("click", function (e) {
     var el = e.target.closest && e.target.closest("[data-cur],[data-curadm]"); if (!el) return;
     e.preventDefault(); e.stopPropagation();
-    if (el.dataset.curadm) openAdmin(el.dataset.curadm); else openOffer(el.dataset.cur);
+    if (el.dataset.curadm) return openAdmin(el.dataset.curadm);
+    var d = dog(el.dataset.cur), G = A.state.settings.groups || {}, fundLed = d && d.lead && G[d.lead] && G[d.lead].mode === "fund";
+    if (fundLed && window.__STAGES) { var w = window.__STAGES.whole(d); openOffer(d.id, { period: "once", full: true, amount: Math.max(0, w.g - w.r) || 5000, custom: true }); }
+    else openOffer(el.dataset.cur);
   }, true);
 
   function all() { decorateCards(); decorateDialog(); decorateAdmin(); }
