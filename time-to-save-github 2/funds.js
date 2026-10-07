@@ -26,6 +26,11 @@
       noInbox: "Отправьте чек волонтёрам в мессенджер:", copy: "Скопировать текст", copied: "Текст скопирован.",
       err: "Не получилось отправить. Попробуйте ещё раз или отправьте чек в мессенджер.", needFile: "Сначала выберите чек.", needAmount: "Укажите сумму.",
       msg: "Здравствуйте! Я перевёл(а) %a на %t. Чек прикрепляю.", toFund: "фонд группы «%s»", toDog: "собаку %s", toSite: "помощь животным",
+      cmt: "Комментарий к переводу", cmtNote: "Так деньги будет проще найти и отчитаться за них.", cmtDog: "Помощь животным %s", cmtFund: "Помощь животным, фонд %s", cmtAny: "Помощь животным", cmtCopy: "Скопировать",
+      orTg: "Или отправьте чек в Telegram", follow: "Следить в Telegram", followNote: "Новости о собаке: новые чеки, этапы, когда путь оплачен.",
+      tgTitle: "Telegram-бот", tgOff: "Бот не подключён: добавьте в Cloudflare секрет TG_TOKEN и нажмите «Включить бота».", tgOn: "Бот @%s работает.", tgSetup: "Включить бота", tgMe: "Подключить мой Telegram",
+      tgMeNote: "Откройте ссылку в телефоне и нажмите «Старт». После этого пересылайте боту фото чеков с подписью, например «D012 ветеринар 15000» — они появятся здесь.", tgLink: "Открыть бота", tgFail: "Не получилось. Проверьте настройки в Cloudflare.",
+      fromTg: "из Telegram", exp: "расход", pdf: "PDF", notified: "Подписчикам в Telegram отправлено сообщений: %s.",
       // admin
       gTitle: "Как работает ваша группа", gNote: "Выберите систему. Её видят посетители на сайте.",
       mAnimal: "Сбор на каждое животное", mAnimalNote: "Деньги собираются на конкретное животное и его этапы.",
@@ -33,7 +38,7 @@
       pay: "Реквизиты для перевода (видно всем)", payPh: "Например: Kaspi Gold +7 7xx xxx xx xx, Айгерим К.", about: "О фонде (видно всем)",
       sitePay: "Общие реквизиты сайта (для животных без группы)", save: "Сохранить", saved: "Сохранено. Не забудьте опубликовать.",
       take: "Взять в фонд", drop: "Убрать из фонда", led: "Ведёт фонд",
-      inbox: "Чеки от донаторов", inboxNote: "Донаторы загружают чеки на сайте. Проверьте поступление на счёт и нажмите «Принять» — пожертвование появится на сайте после публикации.",
+      inbox: "Входящие чеки", inboxNote: "Здесь чеки донаторов с сайта и из Telegram и чеки волонтёров из Telegram. Проверьте и нажмите «Принять» — запись появится на сайте после публикации.",
       inboxOff: "Приём чеков на сайте ещё не подключён.", empty: "Новых чеков нет.", accept: "Принять", reject: "Отклонить", sureReject: "Точно отклонить?",
       accepted: "Принято. Нажмите «Опубликовать на сайте».", load: "Загружаю…", refresh: "Обновить", anon: "Аноним", noAmount: "сумма не указана"
     },
@@ -51,13 +56,18 @@
       noInbox: "Send the receipt to the volunteers in a messenger:", copy: "Copy text", copied: "Text copied.",
       err: "Could not send. Try again or send the receipt in a messenger.", needFile: "Choose a receipt first.", needAmount: "Enter the amount.",
       msg: "Hello! I transferred %a for %t. The receipt is attached.", toFund: "the “%s” group fund", toDog: "dog %s", toSite: "the animals",
+      cmt: "Transfer comment", cmtNote: "It makes the money easy to find and report.", cmtDog: "Помощь животным %s", cmtFund: "Помощь животным, фонд %s", cmtAny: "Помощь животным", cmtCopy: "Copy",
+      orTg: "Or send the receipt in Telegram", follow: "Follow in Telegram", followNote: "News about the dog: new receipts, stages, when the way is paid.",
+      tgTitle: "Telegram bot", tgOff: "The bot is off: add the TG_TOKEN secret in Cloudflare and press “Turn on the bot”.", tgOn: "Bot @%s is on.", tgSetup: "Turn on the bot", tgMe: "Connect my Telegram",
+      tgMeNote: "Open the link on your phone and press Start. Then forward receipt photos to the bot with a caption like “D012 vet 15000” — they show up here.", tgLink: "Open the bot", tgFail: "Did not work. Check the Cloudflare settings.",
+      fromTg: "from Telegram", exp: "expense", pdf: "PDF", notified: "Telegram messages sent to followers: %s.",
       gTitle: "How your group works", gNote: "Choose the system. Visitors see it on the site.",
       mAnimal: "Raise money for each animal", mAnimalNote: "Money is raised for a specific animal and its stages.",
       mFund: "Group common fund", mFundNote: "Donors give to the group's fund; the group chooses whom to rescue and leads it to the end.",
       pay: "Payment details (public)", payPh: "e.g. Kaspi Gold +7 7xx xxx xx xx, Aigerim K.", about: "About the fund (public)",
       sitePay: "Site-wide payment details (for animals without a group)", save: "Save", saved: "Saved. Remember to publish.",
       take: "Take into fund", drop: "Remove from fund", led: "Led by fund",
-      inbox: "Receipts from donors", inboxNote: "Donors upload receipts on the site. Check the money arrived and press Accept; the donation appears after publishing.",
+      inbox: "Incoming receipts", inboxNote: "Donor receipts from the site and Telegram, and volunteer receipts from Telegram. Check and press Accept; the entry appears after publishing.",
       inboxOff: "Receipt upload is not connected yet.", empty: "No new receipts.", accept: "Accept", reject: "Reject", sureReject: "Reject for sure?",
       accepted: "Accepted. Press Publish.", load: "Loading…", refresh: "Refresh", anon: "Anonymous", noAmount: "no amount"
     }
@@ -80,6 +90,15 @@
     return { i: i, o: o, n: (A.state.dogs || []).filter(function (d) { return d.lead === g && d.status !== "adopted"; }).length };
   }
   function admin() { return !!(A.ui && A.ui.admin); }
+  var BOT = "";
+  if (INBOX) fetch(INBOX + "/tg/info").then(function (r) { return r.json(); }).then(function (j) { BOT = j.bot || ""; soon(); }).catch(function () {});
+  function b64u(str) { var u8 = new TextEncoder().encode(str), o = ""; for (var i = 0; i < u8.length; i++) o += String.fromCharCode(u8[i]); return btoa(o).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); }
+  function tgReceipt(t) {
+    var p = "r_" + b64u(JSON.stringify(t.fund ? { d: t.dog || "", f: t.fund } : { d: t.dog || "" }));
+    if (p.length > 64) p = "r_" + b64u(JSON.stringify({ d: t.dog || "" }));
+    return "https://t.me/" + BOT + "?start=" + p;
+  }
+  function comment(t) { var x = T(); return t.fund ? f(x.cmtFund, t.fund) : t.dog ? f(x.cmtDog, t.dog) : x.cmtAny; }
   window.__FUND = function () { var G = window.__GH && window.__GH.group(); return G && isFund(G) ? G : ""; };
 
   var css = document.createElement("style");
@@ -129,7 +148,7 @@
   function message() {
     var t = T(), d = st.dog ? dog(st.dog) : null;
     var target = st.fund ? f(t.toFund, st.fund) : d ? f(t.toDog, d.id + (d.name ? " (" + d.name + ")" : "")) : t.toSite;
-    return t.msg.replace("%a", money(st.amount)).replace("%t", target) + (st.name ? "\n" + t.name + ": " + st.name : "");
+    return t.msg.replace("%a", money(st.amount)).replace("%t", target) + "\n" + t.cmt + ": " + comment(st) + (st.name ? "\n" + t.name + ": " + st.name : "");
   }
   function draw() {
     var t = T(), d = st.dog ? dog(st.dog) : null, pay = payFor(st);
@@ -146,11 +165,13 @@
       '<div class="grp"><span>' + t.period + '</span><div class="chips">' + chip("period", "once", t.once) + chip("period", "month", t.monthly) + "</div></div>" +
       '<div class="grp"><span>' + t.amount + '</span><div class="chips">' + AMOUNTS.map(function (a) { return '<button type="button" class="chip" data-amt="' + a + '" aria-pressed="' + (!st.custom && st.amount === a) + '">' + money(a) + "</button>"; }).join("") +
       '<input type="number" min="1" step="any" id="donamt" placeholder="' + t.other + '" value="' + (st.custom && st.amount ? st.amount : "") + '" style="flex:1 1 130px"></div></div>' +
-      '<div class="grp"><span>' + t.payTitle + "</span>" + (pay ? '<div class="pay">' + esc(pay) + "</div>" : '<p class="note">' + t.payNone + "</p>") + "</div>" +
+      '<div class="grp"><span>' + t.payTitle + "</span>" + (pay ? '<div class="pay">' + esc(pay) + "</div>" : '<p class="note">' + t.payNone + "</p>") +
+      '<p class="note">' + t.cmt + ': <b id="doncmt">' + esc(comment(st)) + '</b> <button type="button" class="btn ghost sm" id="doncmtc">' + t.cmtCopy + "</button><br>" + t.cmtNote + "</p></div>" +
       '<div class="grp"><span>' + t.upTitle + '</span><p class="note">' + t.upNote + "</p>" +
       '<div class="rc">' + (st.read ? '<img alt="" src="' + st.read.thumbUrl + '">' : "") + '<label class="btn ghost" style="cursor:pointer">' + t.pick + '<input type="file" id="donfile" accept="image/*,application/pdf,.pdf" hidden></label></div>' +
       '<p class="note" id="donstat"></p>' +
-      '<div class="row"><input type="number" id="donsum" min="1" step="any" placeholder="' + t.amount + ", " + esc(cur()) + '" value="' + (st.read && st.read.amount ? st.read.amount : "") + '"><input type="date" id="dondate" value="' + esc(st.date) + '"></div></div>' +
+      '<div class="row"><input type="number" id="donsum" min="1" step="any" placeholder="' + t.amount + ", " + esc(cur()) + '" value="' + (st.read && st.read.amount ? st.read.amount : "") + '"><input type="date" id="dondate" value="' + esc(st.date) + '"></div>' +
+      (BOT ? '<a class="note" target="_blank" rel="noopener" href="' + esc(tgReceipt(st)) + '">' + t.orTg + " →</a>" : "") + "</div>" +
       '<div class="grp"><span>' + t.name + '</span><input type="text" id="donname" maxlength="60" autocomplete="name" value="' + esc(st.name) + '"><label class="tog"><input type="checkbox" id="donshow"' + (st.show ? " checked" : "") + "> " + t.show + "</label></div>" +
       (INBOX ? '<button class="btn" id="donsend">' + t.send + "</button>" :
         '<div class="grp"><span>' + t.noInbox + '</span><div class="row">' + contacts().map(function (c) { return '<a class="btn" target="_blank" rel="noopener" data-send="' + c.k + '" href="' + esc(c.url + (c.k === "wa" ? "?text=" + encodeURIComponent(message()) : "")) + '">' + c.label + "</a>"; }).join("") +
@@ -163,6 +184,7 @@
     dlg.querySelector("#donshow").onchange = function (e) { st.show = e.target.checked; };
     dlg.querySelector("#dondate").oninput = function (e) { st.date = e.target.value; };
     dlg.querySelector("#donfile").onchange = function (e) { var file = e.target.files[0]; if (file) readFile(file); };
+    dlg.querySelector("#doncmtc").onclick = function () { try { navigator.clipboard.writeText(comment(st)).then(function () { A.toast(T().copied); }); } catch (x) {} };
     var cp = dlg.querySelector("#doncopy"); if (cp) cp.onclick = function () { try { navigator.clipboard.writeText(message()).then(function () { A.toast(T().copied); }); } catch (x) {} };
     var sb = dlg.querySelector("#donsend"); if (sb) sb.onclick = send;
   }
@@ -247,12 +269,13 @@
   function decorateDialog() {
     document.querySelectorAll("dialog[open] .dinfo").forEach(function (info) {
       var tid = info.querySelector(".tid"), d = tid && dog(tid.textContent.trim()); if (!d) return;
-      var fd = fundOf(d), sig = JSON.stringify([fd, d.status, lang()]), box = info.querySelector(".donx");
+      var fd = fundOf(d), sig = JSON.stringify([fd, d.status, lang(), BOT]), box = info.querySelector(".donx");
       if (box && box.dataset.sig === sig) return;
       if (!box) { box = document.createElement("div"); box.className = "donx"; box.style.cssText = "display:flex;flex-direction:column;gap:6px;margin-top:12px"; var cx = info.querySelector(".curx") || info.querySelector(".apply"); info.insertBefore(box, cx || null); }
       box.dataset.sig = sig;
       box.innerHTML = (fd ? '<span class="muted" style="font-size:13px">' + esc(f(T().ledBy, fd)) + "</span>" : "") +
-        (d.status === "adopted" ? "" : '<button type="button" class="btn" data-ddog="' + esc(d.id) + '">' + (fd ? esc(f(T().donateFund, fd)) : T().donate) + "</button>");
+        (d.status === "adopted" ? "" : '<button type="button" class="btn" data-ddog="' + esc(d.id) + '">' + (fd ? esc(f(T().donateFund, fd)) : T().donate) + "</button>") +
+        (BOT ? '<a class="btn ghost" target="_blank" rel="noopener" href="https://t.me/' + esc(BOT) + "?start=f_" + esc(d.id) + '">' + T().follow + '</a><span class="muted" style="font-size:12px">' + T().followNote + "</span>" : "");
     });
   }
   document.addEventListener("click", function (e) {
@@ -326,14 +349,40 @@
       '<div class="panel"><h2>' + t.inbox + '</h2><p class="muted" style="font-size:14px">' + (INBOX ? t.inboxNote : t.inboxOff) + "</p>" +
       (!INBOX ? "" : inbox.busy ? '<p class="muted">' + t.load + "</p>" : !inbox.items || !inbox.items.length ? '<p class="muted">' + t.empty + "</p>" :
         '<div style="display:flex;flex-direction:column;gap:8px">' + inbox.items.map(function (x) {
-          var d = x.dog ? dog(x.dog) : null, target = x.fund ? f(t.toFund, x.fund) : d ? f(t.toDog, d.id) : t.toSite;
-          return '<div class="it" data-iid="' + esc(x.id) + '"><img alt="" data-iimg="' + esc(x.id) + '"><div><b>' + (x.amount ? money(x.amount) : t.noAmount) + "</b> · " + esc(target) +
-            "<br><small>" + esc(x.date || x.at.slice(0, 10)) + " · " + esc(x.show && x.name ? x.name : (x.name ? x.name + " (" + t.anon.toLowerCase() + ")" : t.anon)) + (x.period === "month" ? " · " + t.monthly : "") + '</small></div><div class="a"><button class="btn sm" data-iok="' + esc(x.id) + '">' + t.accept + '</button><button class="btn ghost sm" data-ino="' + esc(x.id) + '">' + t.reject + "</button></div></div>";
+          var d = x.dog ? dog(x.dog) : null, target = x.fund ? f(t.toFund, x.fund) : d ? f(t.toDog, d.id) : x.dog ? f(t.toDog, x.dog) : t.toSite, ex = x.kind === "expense";
+          return '<div class="it" data-iid="' + esc(x.id) + '"><img alt="' + (x.pdf ? t.pdf : "") + '" data-iimg="' + esc(x.id) + '"><div><b>' + (ex ? "−" : "") + (x.amount ? money(x.amount) : t.noAmount) + "</b> · " + (ex ? t.exp + " · " : "") + esc(target) +
+            "<br><small>" + esc(x.date || x.at.slice(0, 10)) + " · " + esc(ex ? x.name || "" : x.show && x.name ? x.name : (x.name ? x.name + " (" + t.anon.toLowerCase() + ")" : t.anon)) + (x.period === "month" ? " · " + t.monthly : "") + (x.from === "tg" ? " · " + t.fromTg : "") + (x.note ? "<br>«" + esc(x.note) + "»" : "") + '</small></div><div class="a"><button class="btn sm" data-iok="' + esc(x.id) + '">' + t.accept + '</button><button class="btn ghost sm" data-ino="' + esc(x.id) + '">' + t.reject + "</button></div></div>";
         }).join("") + "</div>") +
-      (INBOX ? '<div><button class="btn ghost sm" id="ghirf">' + t.refresh + "</button></div>" : "") + "</div>";
+      (INBOX ? '<div><button class="btn ghost sm" id="ghirf">' + t.refresh + "</button></div>" : "") + "</div>" +
+      (INBOX ? '<div class="panel" style="margin-top:16px"><h2>' + t.tgTitle + '</h2><p class="muted" style="font-size:14px">' + (BOT ? esc(f(t.tgOn, BOT)) : t.tgOff) + "</p>" +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap">' + (BOT ? '<button class="btn sm" id="ghtgme">' + t.tgMe + "</button>" : "") + (owner() ? '<button class="btn ghost sm" id="ghtgset">' + t.tgSetup + "</button>" : "") + '</div><p id="ghtgout" style="font-size:14px"></p></div>' : "");
     var rf = ibox.querySelector("#ghirf"); if (rf) rf.onclick = loadInbox;
+    var tme = ibox.querySelector("#ghtgme"), tset = ibox.querySelector("#ghtgset"), tout = ibox.querySelector("#ghtgout");
+    if (tme) tme.onclick = async function () {
+      try {
+        var r = await fetch(INBOX + "/tg/code", { method: "POST", headers: Object.assign({ "Content-Type": "application/json" }, tokenHdr()), body: JSON.stringify({ group: me() }) });
+        var j = await r.json(); if (!j.code) throw 0;
+        tout.innerHTML = esc(t.tgMeNote) + '<br><a class="btn sm" target="_blank" rel="noopener" style="margin-top:6px" href="https://t.me/' + esc(j.bot || BOT) + "?start=v_" + esc(j.code) + '">' + t.tgLink + "</a>";
+      } catch (e) { tout.textContent = t.tgFail; }
+    };
+    if (tset) tset.onclick = async function () {
+      try {
+        var r = await fetch(INBOX + "/tg/setup", { method: "POST", headers: tokenHdr() }); var j = await r.json();
+        if (!j.bot) throw 0; BOT = j.bot; drawInbox();
+      } catch (e) { tout.textContent = t.tgFail; }
+    };
     ibox.querySelectorAll("[data-copymsg]").forEach(function (b) { b.onclick = function () { try { navigator.clipboard.writeText(b.dataset.copymsg).then(function () { A.toast(T().copied); }); } catch (x) {} }; });
-    ibox.querySelectorAll("[data-iimg]").forEach(function (im) { thumb(im.dataset.iimg).then(function (u) { if (u) { im.src = u; im.onclick = function () { window.open(u, "_blank"); }; } }); });
+    ibox.querySelectorAll("[data-iimg]").forEach(function (im) {
+      thumb(im.dataset.iimg).then(function (u) {
+        if (!u) return;
+        fetch(u).then(function (r) { return r.blob(); }).then(function (b) {
+          var bu = URL.createObjectURL(b);
+          if (/pdf/.test(b.type)) { im.removeAttribute("src"); im.style.cssText = "display:grid;place-items:center;font:700 14px var(--f-body)"; }
+          else im.src = bu;
+          im.onclick = function () { window.open(bu, "_blank"); };
+        });
+      });
+    });
     ibox.querySelectorAll("[data-iok]").forEach(function (b) { b.onclick = function () { accept(b.dataset.iok, b); }; });
     ibox.querySelectorAll("[data-ino]").forEach(function (b) {
       b.onclick = async function () {
@@ -354,6 +403,7 @@
     btn.disabled = true;
     try {
       var v = await getFull(id); if (!v) throw new Error("gone");
+      if (v.meta.from === "tg" || v.meta.kind === "expense") return await acceptRead(id, v, btn);
       var x = v.meta, blob = await (await fetch(v.image)).blob(), img = await createImageBitmap(blob);
       function jpg(max, q) { var k = Math.min(1, max / Math.max(img.width, img.height)), c = document.createElement("canvas"); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k); c.getContext("2d").drawImage(img, 0, 0, c.width, c.height); return new Promise(function (r) { c.toBlob(r, "image/jpeg", q); }); }
       var e = { id: "L" + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), type: "in", date: x.date || x.at.slice(0, 10), amount: +x.amount || 0, dog: x.dog || "", stage: "", note: x.period === "month" ? (lang() === "ru" ? "ежемесячно" : "monthly") : "", who: x.show ? x.name : "" };
@@ -374,6 +424,81 @@
       A.render(); drawInbox(); A.toast(T().accepted);
     } catch (err) { console.warn(err); btn.disabled = false; A.toast(T().err); }
   }
+  // Receipts from Telegram are not yet read or redacted: read them now (amount, date, covered card and phone numbers).
+  async function acceptRead(id, v, btn) {
+    var x = v.meta, blob = await (await fetch(v.image)).blob();
+    var file = new File([blob], x.pdf ? "receipt.pdf" : "receipt.jpg", { type: blob.type });
+    var R = await loadReader(), r = await R.read(file);
+    var ex = x.kind === "expense", d = x.dog ? dog(x.dog) : null;
+    var amount = +x.amount || (r.ok ? r.amount : 0);
+    var what = String(x.note || "").replace(/(^|\s)[DdДд]\s*-?\s*\d{1,5}(?!\d)/, " ").replace(/\d[\d\s.,]*\d|\d/g, " ").replace(/\s+/g, " ").trim();
+    var e = { id: "L" + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), type: ex ? "out" : "in", date: r.date || x.date || x.at.slice(0, 10), amount: amount, dog: d ? d.id : "", stage: "", note: "", auto: true };
+    if (!(amount > 0)) { e.amount = 0; e.noAmount = true; }
+    if (ex) { e.what = what || (r.ok && r.seller) || (lang() === "ru" ? "Покупка сделана" : "Purchase made"); e.stage = x.stage || (d ? (d.status === "adopted" ? "home" : d.stage || "capture") : ""); }
+    else { e.who = x.show ? x.name : ""; if (d) e.stage = d.status === "adopted" ? "home" : d.stage || "capture"; }
+    if (x.fund) e.fund = x.fund; else if (d && fundOf(d)) e.fund = fundOf(d);
+    e.g = e.fund || (window.__GH ? window.__GH.group() : "");
+    e.receipt = "r-" + e.id.toLowerCase();
+    A.LOCAL.set(e.receipt + "|f", URL.createObjectURL(r.full));
+    A.LOCAL.set(e.receipt + "|t", URL.createObjectURL(r.thumb));
+    A.state.ledger = A.state.ledger || []; A.state.ledger.push(e);
+    if (!ex && d && e.stage && !e.fund && e.amount > 0) {
+      d.funds = d.funds || {}; var fs = d.funds[e.stage] = d.funds[e.stage] || { raised: 0, goal: "" };
+      fs.raised = Math.round(((+fs.raised || 0) + e.amount) * 100) / 100;
+    }
+    inbox.accepted[id] = 1; inbox.items = inbox.items.filter(function (y) { return y.id !== id; });
+    A.render(); drawInbox(); A.toast(T().accepted);
+  }
+
+  /* ---------- Telegram news for people who follow a dog ---------- */
+  var base = null;
+  function snapDogs() {
+    var o = {};
+    (A.state.dogs || []).forEach(function (d) {
+      var p = (window.__STAGES ? window.__STAGES.plan(d) : {}) || {};
+      o[d.id] = { st: d.status === "adopted" ? "home" : d.stage || "capture", ad: d.status === "adopted", paid: !!(window.__STAGES && window.__STAGES.whole(d).paid), done: ["capture", "vet", "foster", "home"].filter(function (s) { return (p[s] || {}).done; }), rc: [] };
+    });
+    (A.state.ledger || []).forEach(function (e) { if (e.dog && e.type === "out" && o[e.dog]) o[e.dog].rc.push(e.id); });
+    return o;
+  }
+  var STN = { capture: "Отлов", vet: "Ветеринар", foster: "Передержка", home: "Дом" };
+  function news(prev, now) {
+    var out = [];
+    Object.keys(now).forEach(function (id) {
+      var a = prev[id], b = now[id], d = dog(id); if (!a || !d) return;
+      var nm = d.id + (d.name ? " " + d.name : ""), msg = [];
+      var S = ["capture", "vet", "foster", "home"], pl = window.__STAGES ? window.__STAGES.plan(d) : {};
+      if (b.ad && !a.ad) msg.push("🏠 " + nm + " нашла дом!");
+      else if (S.indexOf(b.st) > S.indexOf(a.st)) { var dt = (pl[b.st] || {}).start; msg.push("🐾 " + nm + ": новый этап — «" + STN[b.st] + "»" + (dt ? ", с " + window.__STAGES.show(dt) : "") + "."); }
+      var fresh = b.rc.filter(function (x) { return a.rc.indexOf(x) < 0; });
+      fresh.slice(0, 5).forEach(function (lid) {
+        var e = (A.state.ledger || []).filter(function (y) { return y.id === lid; })[0]; if (!e) return;
+        msg.push("🧾 Новый чек: " + (e.what || "расход") + (e.noAmount ? "" : ", " + money(e.amount)) + ".");
+      });
+      if (b.paid && !a.paid) msg.push("✅ Весь путь собаки полностью оплачен. Спасибо!");
+      if (msg.length) out.push({ dog: id, text: msg.join("\n") + "\n" + location.origin + location.pathname.replace(/[^/]*$/, "") + "#" + encodeURIComponent(id) });
+    });
+    return out;
+  }
+  async function sendNews(list) {
+    var n = 0;
+    for (var i = 0; i < list.length; i++) {
+      var from = 0;
+      for (var k = 0; k < 20; k++) {
+        try {
+          var r = await fetch(INBOX + "/notify", { method: "POST", headers: Object.assign({ "Content-Type": "application/json" }, tokenHdr()), body: JSON.stringify({ dog: list[i].dog, text: list[i].text, from: from }) });
+          var j = await r.json(); n += j.sent || 0; if (!j.rest) break; from = j.next;
+        } catch (e) { break; }
+      }
+    }
+    if (n) A.toast(f(T().notified, n));
+  }
+  window.addEventListener("tts:published", function () {
+    if (!INBOX || !base) return;
+    var now = snapDogs(), list = news(base, now); base = now;
+    if (BOT && list.length) sendNews(list);
+  });
+
   // Accepted receipts leave the inbox once the site is published.
   window.addEventListener("tts:published", function () {
     Object.keys(inbox.accepted).forEach(function (id) { fetch(INBOX + "/pending/" + id, { method: "DELETE", headers: tokenHdr() }).catch(function () {}); delete inbox.accepted[id]; });
@@ -384,6 +509,8 @@
     var anchor = document.getElementById("ghmoney") || document.getElementById("ghhist") || document.getElementById("ghvp") || document.getElementById("toast");
     if (!ibox.isConnected) { anchor.parentNode.insertBefore(ibox, anchor); loadInbox(); }
     if (!gbox.isConnected && window.__GH) { ibox.parentNode.insertBefore(gbox, ibox); drawGroup(); }
+    if (!window.__FOSTLOAD) { window.__FOSTLOAD = 1; var fs = document.createElement("script"); fs.src = "fosters.js"; document.body.appendChild(fs); }
+    if (!base && (A.state.dogs || []).length) base = snapDogs();
   }
 
   // The public catalog loads dogs and settings only; fund totals also need the money log.
